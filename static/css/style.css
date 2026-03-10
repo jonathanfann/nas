@@ -2,8 +2,22 @@
     box-sizing: border-box;
 }
 
+.icon {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.btn__icon {
+    flex-shrink: 0;
+}
+
+.file-table__icon {
+    margin-right: 0.5em;
+    opacity: 0.8;
+}
+
 body {
-    font-family: system-ui, -apple-system, sans-serif;
+    font-family: "Share Tech", sans-serif;
     margin: 0;
     padding: 1.5rem;
     background: #1a1a2e;
@@ -12,12 +26,28 @@ body {
 }
 
 .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
 }
 
 .header__title {
-    font-size: 1.5rem;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1.75rem;
     margin: 0;
+    letter-spacing: 0.02em;
+}
+
+.header__restart {
+    margin: 0;
+}
+
+.btn--sm {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
 }
 
 .path-bar {
@@ -42,19 +72,57 @@ body {
 .toolbar {
     display: flex;
     gap: 1rem;
-    align-items: center;
+    align-items: stretch;
     margin-bottom: 1rem;
     flex-wrap: wrap;
 }
 
 .upload-form {
     display: flex;
-    gap: 0.5rem;
-    align-items: center;
+    flex: 1 1 100%;
+    min-width: 0;
 }
 
-.upload-form input[type="file"] {
+.drop-zone {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 80px;
+    padding: 1rem 1.5rem;
+    border: 2px dashed #0f3460;
+    border-radius: 8px;
+    background: #16213e;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.drop-zone:hover,
+.drop-zone:focus-within {
+    border-color: #4a9eff;
+    background: #1a2a4a;
+}
+
+.drop-zone.drop-zone--active {
+    border-color: #4a9eff;
+    background: #0f3460;
+}
+
+.drop-zone__input {
+    position: absolute;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: hidden;
+    z-index: -1;
+}
+
+.drop-zone__prompt {
+    color: #4a9eff;
     font-size: 0.9rem;
+    text-align: center;
+    pointer-events: none;
 }
 
 .btn {
@@ -66,7 +134,9 @@ body {
     cursor: pointer;
     font-size: 0.9rem;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
 }
 
 .btn:hover {
@@ -80,6 +150,24 @@ body {
 
 .btn--primary:hover {
     background: #1a4a8a;
+}
+
+.btn--danger {
+    padding: 0.25rem 0.5rem;
+    background: #3d1a1a;
+    border-color: #8b2a2a;
+}
+
+.btn--danger:hover {
+    background: #8b2a2a;
+}
+
+.file-table__actions .delete-form {
+    display: inline;
+}
+
+.file-table__actions .btn {
+    border: none;
 }
 
 .file-table-wrapper {

@@ -1,28 +1,26 @@
+{% from "macros/icons.html" import icon %}
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>
-            {% block title %}
-NAS Storage
-            {% endblock %}
-        </title>
-        <link rel="stylesheet"
-              href="{{ url_for('static', filename='css/style.css') }}">
-    </head>
-    <body>
-        <header class="header">
-            <h1 class="header__title">
-NAS Storage
-            </h1>
-        </header>
-        <main class="main">
-            {% block content %}
-            {% endblock %}
-        </main>
-        <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-        {% block scripts %}
-        {% endblock %}
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}NAS Storage{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="header">
+        <h1 class="header__title">NAS Storage</h1>
+        <form action="{{ url_for('nas.restart') }}" method="post" class="header__restart" onsubmit="return confirm('Restart the app?');">
+            <button type="submit" class="btn btn--primary btn--sm" title="Restart app">{{ icon("restart", size=16, class="btn__icon") }} Restart</button>
+        </form>
+    </header>
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
 </html>

@@ -1,13 +1,9 @@
 """Flask routes for NAS file server."""
 
-from flask import (
-    Blueprint,
-    redirect,
-    render_template,
-    request,
-    send_from_directory,
-    url_for,
-)
+import shutil
+import subprocess
+
+from flask import Blueprint, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
 from app.utils import BASE_PATH, format_size, get_relative_path
@@ -40,9 +36,7 @@ def browse(subpath=""):
             entries.append(
                 {
                     "name": item.name,
-                    "path": (
-                        str(item.relative_to(BASE_PATH)) if item != BASE_PATH else ""
-                    ),
+                    "path": str(item.relative_to(BASE_PATH)) if item != BASE_PATH else "",
                     "is_dir": item.is_dir(),
                     "size_str": format_size(stat.st_size) if item.is_file() else "-",
                 }
@@ -51,7 +45,12 @@ def browse(subpath=""):
             continue
 
     parent = path.parent
-    parent_rel = str(parent.relative_to(BASE_PATH)) if parent != BASE_PATH else ""
+    try:
+        parent_rel = (
+            str(parent.relative_to(BASE_PATH)) if parent != BASE_PATH else ""
+        )
+    except ValueError:
+        parent_rel = ""  # parent is outside BASE_PATH (e.g. at root)
     path_display = "/" + subpath if subpath else "/"
     path_upload = subpath.rstrip("/") if subpath else ""
 
@@ -87,3 +86,44 @@ def download(filepath):
     if not path.exists() or path.is_dir():
         return "Not found", 404
     return send_from_directory(path.parent, path.name, as_attachment=True)
+
+
+@bp.route("/delete/<path:filepath>", methods=["POST"])
+def delete(filepath):
+    """Delete a file or directory."""
+    path = get_relative_path(filepath)
+    if not path.exists():
+        return "Not found", 404
+    if path == BASE_PATH:
+        return "Cannot delete NAS root", 400
+    try:
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+    except OSError as e:
+        return str(e), 500
+    try:
+        parent = (
+            str(path.parent.relative_to(BASE_PATH))
+            if path.parent != BASE_PATH
+            else ""
+        )
+    except ValueError:
+        parent = ""
+    return redirect(url_for("nas.browse", path=parent))
+
+
+@bp.route("/restart", methods=["POST"])
+def restart():
+    """Restart the NAS web service."""
+    try:
+        subprocess.run(
+            ["sudo", "systemctl", "restart", "nas-web"],
+            check=True,
+            capture_output=True,
+            timeout=10,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
+        return "Restart failed", 500
+    return redirect(url_for("nas.browse", path=""))

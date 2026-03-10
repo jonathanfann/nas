@@ -1,61 +1,57 @@
 {% extends "base.html" %}
+{% from "macros/icons.html" import icon %}
+
 {% block content %}
-    <div class="browse">
-        <div class="path-bar">
-            <a href="{{ url_for('nas.browse', path='') }}" class="path-bar__root">/</a>
-            <span class="path-bar__current">{{ path_display }}</span>
-        </div>
-        <div class="toolbar">
-            <form class="upload-form"
-                  action="{{ url_for('nas.upload', path=path_upload) }}"
-                  method="post"
-                  enctype="multipart/form-data">
-                <input type="file" name="file" id="file-input" multiple>
-                <button type="submit" class="btn btn--primary">
-Upload
-                </button>
-            </form>
-            {% if parent_rel %}
-                <a href="{{ url_for('nas.browse', path=parent_rel) }}" class="btn">↑ Parent</a>
-            {% endif %}
-        </div>
-        <div class="file-table-wrapper">
-            <table class="file-table">
-                <thead>
-                    <tr>
-                        <th>
-Name
-                        </th>
-                        <th>
-Size
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for entry in entries %}
-                        <tr>
-                            <td class="file-table__name {% if entry.is_dir %}file-table__name--dir{% endif %}">
-                                <a href="{% if entry.is_dir %}{{ url_for('nas.browse', path=entry.path) }}{% else %}{{ url_for('nas.download', filepath=entry.path) }}{% endif %}">
-                                    {% if entry.is_dir %}
-                                        📁
-                                    {% else %}
-                                        📄
-                                    {% endif %}
-                                    {{ entry.name }}
-                                </a>
-                            </td>
-                            <td class="file-table__size">
-{{ entry.size_str }}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% if not entries %}
-            <p class="empty-message">
-Empty folder. Upload files above.
-            </p>
+<div class="browse">
+    <div class="path-bar">
+        <a href="{{ url_for('nas.browse', path='') }}" class="path-bar__root">/</a>
+        <span class="path-bar__current">{{ path_display }}</span>
+    </div>
+
+    <div class="toolbar">
+        <form class="upload-form" action="{{ url_for('nas.upload', path=path_upload) }}" method="post" enctype="multipart/form-data" id="upload-form">
+            <label class="drop-zone" id="drop-zone">
+                <input type="file" name="file" id="file-input" multiple class="drop-zone__input">
+                <span class="drop-zone__prompt">Drop files here or click to browse</span>
+            </label>
+        </form>
+        {% if parent_rel %}
+        <a href="{{ url_for('nas.browse', path=parent_rel) }}" class="btn">{{ icon("arrow-up", size=16, class="btn__icon") }} Parent</a>
         {% endif %}
     </div>
+
+    <div class="file-table-wrapper">
+        <table class="file-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td class="file-table__name {% if entry.is_dir %}file-table__name--dir{% endif %}">
+                        <a href="{% if entry.is_dir %}{{ url_for('nas.browse', path=entry.path) }}{% else %}{{ url_for('nas.download', filepath=entry.path) }}{% endif %}">
+                            {{ icon("folder" if entry.is_dir else "file", size=18, class="file-table__icon") }}
+                            {{ entry.name }}
+                        </a>
+                    </td>
+                    <td class="file-table__size">{{ entry.size_str }}</td>
+                    <td class="file-table__actions">
+                        <form action="{{ url_for('nas.delete', filepath=entry.path) }}" method="post" class="delete-form" onsubmit="return confirm('Delete this item?');">
+                            <button type="submit" class="btn btn--danger" title="Delete">{{ icon("trash", size=16, class="btn__icon") }}</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if not entries %}
+    <p class="empty-message">Empty folder. Upload files above.</p>
+    {% endif %}
+</div>
 {% endblock %}
