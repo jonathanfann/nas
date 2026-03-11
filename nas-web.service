@@ -1,0 +1,13 @@
+[Unit]
+Description=NAS File Server
+After=network.target
+
+[Service]
+User=rasp
+WorkingDirectory=/home/rasp/Projects/nas
+Environment="PATH=/home/rasp/Projects/nas/.venv/bin"
+ExecStart=/home/rasp/Projects/nas/.venv/bin/gunicorn -w 4 -b 0.0.0.0:8080 "app:create_app()"
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

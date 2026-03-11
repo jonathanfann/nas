@@ -1,8 +1,149 @@
 /**
- * NAS file browser - drag & drop upload, client-side enhancements
+ * NAS file browser - drag & drop upload, modals, client-side enhancements
  */
 
+/** Modal helpers - replace native alert/confirm */
+const Modal = {
+    overlay: null,
+
+    init() {
+        if (this.overlay) return;
+        this.overlay = document.createElement("div");
+        this.overlay.className = "modal-overlay";
+        this.overlay.addEventListener("click", (e) => {
+            if (e.target === this.overlay) this.close();
+        });
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && this.overlay?.classList.contains("modal-overlay--open")) {
+                this.close();
+            }
+        });
+        document.body.appendChild(this.overlay);
+    },
+
+    show(content) {
+        this.init();
+        this.overlay.innerHTML = "";
+        this.overlay.appendChild(content);
+        this.overlay.classList.add("modal-overlay--open");
+    },
+
+    close() {
+        if (this.overlay) {
+            this.overlay.classList.remove("modal-overlay--open");
+        }
+    },
+
+    confirm(message) {
+        return new Promise((resolve) => {
+            const modal = document.createElement("div");
+            modal.className = "modal";
+            const msg = document.createElement("p");
+            msg.className = "modal__message";
+            msg.textContent = message;
+            modal.appendChild(msg);
+            const actions = document.createElement("div");
+            actions.className = "modal__actions";
+            actions.innerHTML = `
+                <button type="button" class="btn btn--primary" data-action="confirm">OK</button>
+                <button type="button" class="btn" data-action="cancel">Cancel</button>
+            `;
+            modal.appendChild(actions);
+            modal.querySelector("[data-action='confirm']").addEventListener("click", () => {
+                this.close();
+                resolve(true);
+            });
+            modal.querySelector("[data-action='cancel']").addEventListener("click", () => {
+                this.close();
+                resolve(false);
+            });
+            this.show(modal);
+        });
+    },
+
+    alert(message) {
+        return new Promise((resolve) => {
+            const modal = document.createElement("div");
+            modal.className = "modal";
+            const msg = document.createElement("p");
+            msg.className = "modal__message";
+            msg.textContent = message;
+            modal.appendChild(msg);
+            const actions = document.createElement("div");
+            actions.className = "modal__actions";
+            actions.innerHTML = `
+                <button type="button" class="btn btn--primary" data-action="ok">OK</button>
+            `;
+            modal.appendChild(actions);
+            modal.querySelector("[data-action='ok']").addEventListener("click", () => {
+                this.close();
+                resolve();
+            });
+            this.show(modal);
+        });
+    },
+};
+
 document.addEventListener("DOMContentLoaded", () => {
+    // Restart form - fetch instead of form submit, no redirect to /restart
+    const restartForm = document.getElementById("restart-form");
+    if (restartForm) {
+        restartForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const confirmed = await Modal.confirm("Restart the app?");
+            if (!confirmed) return;
+
+            const btn = restartForm.querySelector("button[type='submit']");
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="btn__icon">⏳</span> Restarting…';
+
+            try {
+                const response = await fetch(restartForm.action, {
+                    method: "POST",
+                    redirect: "follow",
+                });
+                if (response.ok) {
+                    await Modal.alert("App restarted.");
+                    window.location.reload();
+                } else {
+                    await Modal.alert("Restart failed.");
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            } catch {
+                await Modal.alert("Restart failed.");
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    }
+
+    // Delete forms - confirm modal, fetch, then navigate to parent
+    document.addEventListener("submit", async (e) => {
+        const form = e.target.closest(".delete-form");
+        if (!form) return;
+
+        e.preventDefault();
+        const confirmed = await Modal.confirm("Delete this item?");
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(form.action, {
+                method: "POST",
+                redirect: "follow",
+            });
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                window.location.reload();
+            }
+        } catch {
+            window.location.reload();
+        }
+    });
+
+    // Drag & drop upload
     const dropZone = document.getElementById("drop-zone");
     const fileInput = document.getElementById("file-input");
     const uploadForm = document.getElementById("upload-form");
@@ -11,14 +152,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const uploadUrl = uploadForm.action;
 
-    // Click to browse: label already handles this, but we need to auto-submit on file select
     fileInput.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
             uploadForm.submit();
         }
     });
 
-    // Drag and drop
     ["dragenter", "dragover"].forEach((eventName) => {
         dropZone.addEventListener(eventName, (e) => {
             e.preventDefault();

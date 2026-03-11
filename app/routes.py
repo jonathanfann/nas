@@ -2,6 +2,8 @@
 
 import shutil
 import subprocess
+import threading
+import time
 
 from flask import Blueprint, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
@@ -116,14 +118,24 @@ def delete(filepath):
 
 @bp.route("/restart", methods=["POST"])
 def restart():
-    """Restart the NAS web service."""
-    try:
-        subprocess.run(
-            ["sudo", "systemctl", "restart", "nas-web"],
-            check=True,
-            capture_output=True,
-            timeout=10,
-        )
-    except (subprocess.CalledProcessError, subprocess.TimeoutExpired, FileNotFoundError):
-        return "Restart failed", 500
-    return redirect(url_for("nas.browse", path=""))
+    """Restart the NAS web service. Runs in background so the response can be sent first."""
+
+    def do_restart():
+        time.sleep(2)  # Allow response to reach client before process is killed
+        try:
+            subprocess.run(
+                ["sudo", "systemctl", "restart", "nas-web"],
+                check=True,
+                capture_output=True,
+                timeout=10,
+            )
+        except (
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+            FileNotFoundError,
+        ):
+            pass  # Process will be gone; client already got 200
+
+    thread = threading.Thread(target=do_restart, daemon=True)
+    thread.start()
+    return "", 200

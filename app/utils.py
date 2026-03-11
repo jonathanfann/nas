@@ -1,8 +1,14 @@
 """Utility functions for the NAS file server."""
 
+import os
 from pathlib import Path
 
-BASE_PATH = Path("/Projects/nas")
+_base = os.environ.get("NAS_BASE_PATH")
+if not _base:
+    raise ValueError(
+        "NAS_BASE_PATH must be set. Copy .env.example to .env and configure."
+    )
+BASE_PATH = Path(_base)
 
 
 def get_relative_path(path_str: str) -> Path:

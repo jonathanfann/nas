@@ -3,6 +3,26 @@
     "version": "1.0.0",
     "private": true,
     "devDependencies": {
-        "eslint": "^8.57.0"
+        "eslint": "^8.57.0",
+        "eslint-config-prettier": "^9.1.0",
+        "husky": "^9.1.7",
+        "lint-staged": "^15.4.3",
+        "prettier": "^3.2.5"
+    },
+    "scripts": {
+        "prepare": "husky",
+        "lint": "eslint . && npx prettier --check .",
+        "lint:fix": "eslint . --fix && npx prettier --write .",
+        "format": "npx prettier --write .",
+        "precommit:security": "bash .husky/check-sensitive-files.sh"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx}": [
+            "eslint --fix",
+            "prettier --write"
+        ],
+        "*.{json,css,html,md}": [
+            "prettier --write"
+        ]
     }
 }

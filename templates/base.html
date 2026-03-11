@@ -13,7 +13,7 @@
 <body>
     <header class="header">
         <h1 class="header__title">NAS Storage</h1>
-        <form action="{{ url_for('nas.restart') }}" method="post" class="header__restart" onsubmit="return confirm('Restart the app?');">
+        <form action="{{ url_for('nas.restart') }}" method="post" class="header__restart" id="restart-form">
             <button type="submit" class="btn btn--primary btn--sm" title="Restart app">{{ icon("restart", size=16, class="btn__icon") }} Restart</button>
         </form>
     </header>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NAS Web File Server - Browse, upload, and download files from /Projects/nas
+NAS Web File Server - Browse, upload, and download files from a configurable path.
 """
 
 from app import create_app

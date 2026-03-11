@@ -1,5 +1,7 @@
 .venv/
 __pycache__/
+.cursor/
+.vscode/
 *.pyc
 *.pyo
 *.pyd
@@ -7,4 +9,11 @@ __pycache__/
 node_modules/
 .DS_Store
 .env
+.env.*
+!.env.example
 *.log
+*.db
+*.sqlite
+*.sqlite3
+*.pem
+*.key

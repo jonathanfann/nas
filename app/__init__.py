@@ -2,6 +2,10 @@
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from flask import Flask
 
 from app.utils import BASE_PATH
