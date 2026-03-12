@@ -3,5 +3,6 @@
     "line_length": 120,
     "indent": "4",
     "preserve_blank_lines": true,
-    "preserve_leading_space": true
+    "preserve_leading_space": true,
+    "extend_exclude": "templates/home.html"
 }

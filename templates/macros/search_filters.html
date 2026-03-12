@@ -1,0 +1,40 @@
+{% macro search_type_select(
+    current_value="",
+    name="type",
+    select_id="search-type",
+    class_name="search-form__select",
+    include_all=true,
+    options=None
+) %}
+    {% set default_options = [
+        {
+            "value": "images",
+            "label": "Images"
+        },
+        {
+            "value": "videos",
+            "label": "Videos"
+        },
+        {
+            "value": "music",
+            "label": "Music"
+        },
+        {
+            "value": "files",
+            "label": "Files"
+        }
+    ] %}
+{% set resolved_options = options if options is not none else default_options %}
+    <select name="{{ name }}" id="{{ select_id }}" class="{{ class_name }}">
+        {% if include_all %}
+            <option value="" {{ "selected" if not current_value }}>All types
+            </option>
+        {% endif %}
+        {% for option in resolved_options %}
+            <option value="{{ option.value }}"
+                    {{ "selected" if current_value == option.value }}>
+                {{ option.label }}
+            </option>
+        {% endfor %}
+    </select>
+{% endmacro %}

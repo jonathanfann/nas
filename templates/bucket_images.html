@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% from "macros/icons.html" import icon %}
+
+{% block content %}
+    <div class="bucket-view bucket-view--images">
+        <div class="path-bar">
+            <a href="{{ url_for("nas.index") }}" class="path-bar__root">Home</a>
+            <span class="path-bar__sep">/</span>
+            <span class="path-bar__current">Images</span>
+        </div>
+
+        <h2 class="bucket-view__title">
+            {{ icon("image", size=28, class="icon") }}
+            Images ({{ total }})
+        </h2>
+
+        <div class="image-grid">
+            {% for entry in entries %}
+                <article class="image-card"
+                         data-path="{{ entry.path }}"
+                         data-name="{{ entry.name }}"
+                         data-size="{{ entry.size_str }}"
+                         data-mtime="{{ entry.mtime_str }}"
+                         data-preview-url="{{ url_for('nas.preview', filepath=entry.path) }}"
+                         data-download-url="{{ url_for('nas.download', filepath=entry.path) }}"
+                         data-delete-url="{{ url_for('nas.delete', filepath=entry.path) }}">
+                    <div class="image-card__thumb">
+                        <img src="{{ url_for('nas.preview', filepath=entry.path) }}"
+                             alt="{{ entry.name }}"
+                             loading="lazy"
+                             class="image-card__img"
+                             onerror="this.parentElement.classList.add('image-card__thumb--error')">
+                    </div>
+                    <div class="image-card__caption">
+{{ entry.name }}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+
+        {% if total_pages > 1 %}
+            <nav class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('nas.bucket', bucket='images', page=page-1) }}"
+                       class="btn btn--sm">← Previous</a>
+                {% endif %}
+                <span class="pagination__info">Page {{ page }} of {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('nas.bucket', bucket='images', page=page+1) }}"
+                       class="btn btn--sm">Next →</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+
+        {% if not entries %}
+            <p class="empty-message">
+No images found.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+        <div class="lightbox__backdrop">
+        </div>
+        <div class="lightbox__content">
+            <button type="button" class="lightbox__close" aria-label="Close">
+                {{ icon("x", size=24, class="icon") }}
+            </button>
+            <div class="lightbox__image-wrap">
+                <img src="" alt="" class="lightbox__image" id="lightbox-image">
+            </div>
+            <div class="lightbox__meta">
+                <div class="lightbox__meta-row">
+                    <span class="lightbox__meta-label">Name</span>
+                    <span class="lightbox__meta-value" id="lightbox-name"></span>
+                </div>
+                <div class="lightbox__meta-row">
+                    <span class="lightbox__meta-label">Size</span>
+                    <span class="lightbox__meta-value" id="lightbox-size"></span>
+                </div>
+                <div class="lightbox__meta-row">
+                    <span class="lightbox__meta-label">Modified</span>
+                    <span class="lightbox__meta-value" id="lightbox-mtime"></span>
+                </div>
+            </div>
+            <div class="lightbox__actions">
+                <a href="#" class="btn btn--primary" id="lightbox-download">
+                    {{ icon("download", size=18, class="btn__icon") }} Download
+                </a>
+                <form action="#"
+                      method="post"
+                      class="lightbox__delete-form"
+                      id="lightbox-delete-form">
+                    <input type="hidden" name="redirect_to" value="bucket:images">
+                    <button type="submit" class="btn btn--danger">
+                        {{ icon("trash", size=18, class="btn__icon") }} Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lightbox = document.getElementById('lightbox');
+        if (!lightbox) return;
+
+        const lightboxImage = document.getElementById('lightbox-image');
+        const lightboxName = document.getElementById('lightbox-name');
+        const lightboxSize = document.getElementById('lightbox-size');
+        const lightboxMtime = document.getElementById('lightbox-mtime');
+        const lightboxDownload = document.getElementById('lightbox-download');
+        const lightboxDeleteForm = document.getElementById('lightbox-delete-form');
+        const closeBtn = lightbox.querySelector('.lightbox__close');
+        const backdrop = lightbox.querySelector('.lightbox__backdrop');
+
+        function openLightbox(card) {
+            if (!lightboxImage || !lightboxName || !lightboxSize || !lightboxMtime || !lightboxDownload || !lightboxDeleteForm) return;
+            lightboxImage.src = card.dataset.previewUrl || '';
+            lightboxImage.alt = card.dataset.name || '';
+            lightboxName.textContent = card.dataset.name || '';
+            lightboxSize.textContent = card.dataset.size || '';
+            lightboxMtime.textContent = card.dataset.mtime || '';
+            lightboxDownload.href = card.dataset.downloadUrl || '#';
+            lightboxDeleteForm.action = card.dataset.deleteUrl || '#';
+            lightbox.setAttribute('aria-hidden', 'false');
+            lightbox.classList.add('lightbox--open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightbox.classList.remove('lightbox--open');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('click', function(e) {
+            const card = e.target.closest('.image-card');
+            if (card && !e.target.closest('a, button')) {
+                e.preventDefault();
+                openLightbox(card);
+            }
+        });
+
+        if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+        if (backdrop) backdrop.addEventListener('click', closeLightbox);
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && lightbox.classList.contains('lightbox--open')) {
+                closeLightbox();
+            }
+        });
+
+        if (lightboxDeleteForm) {
+            lightboxDeleteForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const confirmed = await (typeof Modal !== 'undefined' ? Modal.confirm('Delete this image?') : Promise.resolve(confirm('Delete this image?')));
+                if (!confirmed) return;
+                const form = e.target;
+                const formData = new FormData(form);
+                try {
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        redirect: 'follow'
+                    });
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                    } else {
+                        closeLightbox();
+                        window.location.reload();
+                    }
+                } catch {
+                    window.location.reload();
+                }
+            });
+        }
+    });
+    </script>
+{% endblock %}

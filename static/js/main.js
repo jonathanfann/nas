@@ -85,6 +85,25 @@ const Modal = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
+    const waitForAppRecovery = async (maxAttempts = 45, delayMs = 1000) => {
+        for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            try {
+                const healthResponse = await fetch("/health", {
+                    method: "GET",
+                    cache: "no-store",
+                });
+                if (healthResponse.ok) {
+                    window.location.reload();
+                    return true;
+                }
+            } catch {
+                // App is likely still restarting; keep polling.
+            }
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
+        return false;
+    };
+
     // Restart form - fetch instead of form submit, no redirect to /restart
     const restartForm = document.getElementById("restart-form");
     if (restartForm) {
@@ -95,8 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const btn = restartForm.querySelector("button[type='submit']");
             const originalText = btn.innerHTML;
+            const iconMarkup =
+                btn.querySelector(".btn__icon")?.outerHTML ||
+                '<span class="btn__icon" aria-hidden="true"></span>';
             btn.disabled = true;
-            btn.innerHTML = '<span class="btn__icon">⏳</span> Restarting…';
+            btn.innerHTML = `${iconMarkup} Restarting...`;
 
             try {
                 const response = await fetch(restartForm.action, {
@@ -104,17 +126,30 @@ document.addEventListener("DOMContentLoaded", () => {
                     redirect: "follow",
                 });
                 if (response.ok) {
-                    await Modal.alert("App restarted.");
-                    window.location.reload();
+                    const recovered = await waitForAppRecovery();
+                    if (!recovered) {
+                        await Modal.alert(
+                            "Restart is taking longer than expected. Please refresh manually."
+                        );
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
                 } else {
-                    await Modal.alert("Restart failed.");
+                    const details = (await response.text()).trim();
+                    await Modal.alert(details || "Restart failed.");
                     btn.disabled = false;
                     btn.innerHTML = originalText;
                 }
             } catch {
-                await Modal.alert("Restart failed.");
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                // Common during service restart; poll health until app is reachable again.
+                const recovered = await waitForAppRecovery(60, 1000);
+                if (!recovered) {
+                    await Modal.alert(
+                        "Connection interrupted during restart. The app may still be restarting. Refresh in a few seconds."
+                    );
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
             }
         });
     }
@@ -150,8 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!dropZone || !fileInput || !uploadForm) return;
 
-    const uploadUrl = uploadForm.action;
-
     fileInput.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
             uploadForm.submit();
@@ -185,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             formData.append("file", file);
         }
 
-        fetch(uploadUrl, {
+        fetch(uploadForm.action, {
             method: "POST",
             body: formData,
             redirect: "follow",

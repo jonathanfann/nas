@@ -1,0 +1,76 @@
+{% from "macros/icons.html" import icon %}
+
+<div class="search-results__panel">
+    {% if q %}
+        <h3 class="search-results__heading">
+            {% if total %}
+                {{ total }} result{{ 's' if total != 1 else '' }} for "{{ q }}"
+            {% else %}
+                No results for "{{ q }}"
+            {% endif %}
+        </h3>
+
+        {% if entries %}
+            <div class="file-table-wrapper">
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>
+Name
+                            </th>
+                            <th>
+Size
+                            </th>
+                            <th>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in entries %}
+                            <tr>
+                                <td class="file-table__name">
+                                    <a href="{{ url_for('nas.download', filepath=entry.path) }}">
+                                        {{ icon('image' if entry.bucket == 'images' else 'video' if entry.bucket == 'videos' else 'music' if entry.bucket == 'music' else 'file', size=18, class="file-table__icon") }}
+                                        {{ entry.name }}
+                                    </a>
+                                </td>
+                                <td class="file-table__size">
+{{ entry.size_str }}
+                                </td>
+                                <td class="file-table__actions">
+                                    <form action="{{ url_for('nas.delete', filepath=entry.path) }}"
+                                          method="post"
+                                          class="delete-form">
+                                        <button type="submit" class="btn btn--danger" title="Delete">
+{{ icon("trash", size=16, class="btn__icon") }}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if total_pages > 1 %}
+                <nav class="pagination">
+                    {% if page > 1 %}
+                        <a href="{{ url_for('nas.search', q=q, page=page-1) }}"
+                           hx-get="{{ url_for('nas.search', q=q, page=page-1) }}"
+                           hx-target="#search-results"
+                           hx-swap="innerHTML"
+                           class="btn btn--sm">← Previous</a>
+                    {% endif %}
+                    <span class="pagination__info">Page {{ page }} of {{ total_pages }}</span>
+                    {% if page < total_pages %}
+                        <a href="{{ url_for('nas.search', q=q, page=page+1) }}"
+                           hx-get="{{ url_for('nas.search', q=q, page=page+1) }}"
+                           hx-target="#search-results"
+                           hx-swap="innerHTML"
+                           class="btn btn--sm">Next →</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+</div>

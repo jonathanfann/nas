@@ -1,26 +1,49 @@
 {% from "macros/icons.html" import icon %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}NAS Storage{% endblock %}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <header class="header">
-        <h1 class="header__title">NAS Storage</h1>
-        <form action="{{ url_for('nas.restart') }}" method="post" class="header__restart" id="restart-form">
-            <button type="submit" class="btn btn--primary btn--sm" title="Restart app">{{ icon("restart", size=16, class="btn__icon") }} Restart</button>
-        </form>
-    </header>
-    <main class="main">
-        {% block content %}{% endblock %}
-    </main>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    {% block scripts %}{% endblock %}
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>
+            {% block title %}
+NAS Storage
+            {% endblock %}
+        </title>
+        <link rel="icon"
+              href="{{ url_for('static', filename='favicon.svg') }}?v={{ config.get('CACHE_BUST', 0) }}"
+              type="image/svg+xml">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech&display=swap"
+              rel="stylesheet">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/style.css') }}?v={{ config.get('CACHE_BUST', 0) }}">
+        <script src="https://unpkg.com/htmx.org@1.9.10" defer></script>
+    </head>
+    <body>
+        <header class="header">
+            <h1 class="header__title">
+                <a href="{{ url_for("nas.index") }}" class="header__title-link">NAS Storage</a>
+            </h1>
+            <nav class="header__nav">
+                <a href="{{ url_for("nas.index") }}" class="btn btn--sm">Home</a>
+                <a href="{{ url_for('nas.browse', subpath='') }}" class="btn btn--sm">Browse</a>
+                <form action="{{ url_for("nas.restart") }}"
+                      method="post"
+                      class="header__restart"
+                      id="restart-form">
+                    <button type="submit" class="btn btn--primary btn--sm" title="Restart app">
+{{ icon("restart", size=16, class="btn__icon") }} Restart
+                    </button>
+                </form>
+            </nav>
+        </header>
+        <main class="main">
+            {% block content %}
+            {% endblock %}
+        </main>
+        <script src="{{ url_for('static', filename='js/main.js') }}?v={{ config.get('CACHE_BUST', 0) }}"></script>
+        {% block scripts %}
+        {% endblock %}
+    </body>
 </html>

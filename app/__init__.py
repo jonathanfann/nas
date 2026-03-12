@@ -1,6 +1,7 @@
 """NAS Web File Server application."""
 
 import os
+import time
 
 from dotenv import load_dotenv
 
@@ -21,6 +22,7 @@ def create_app():
     )
     app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024 * 1024  # 1GB max upload
     app.config["BASE_PATH"] = BASE_PATH
+    app.config["CACHE_BUST"] = int(time.time())
 
     from app import routes
 

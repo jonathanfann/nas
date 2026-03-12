@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "macros/icons.html" import icon %}
+{% from "macros/search_filters.html" import search_type_select %}
+
+{% block content %}
+    <div class="search-page">
+        <div class="search-bar">
+            <form class="search-form"
+                  action="{{ url_for("nas.search") }}"
+                  method="get"
+                  hx-get="{{ url_for("nas.search") }}"
+                  hx-target="#search-results"
+                  hx-trigger="keyup changed delay:300ms from:#search-input, change from:#search-type"
+                  hx-push-url="true">
+                <div class="search-form__inputs">
+                    <span class="search-form__icon">{{ icon("search", size=20, class="icon") }}</span>
+                    <input type="search"
+                           name="q"
+                           id="search-input"
+                           value="{{ q }}"
+                           placeholder="Search files..."
+                           class="search-form__input"
+                           autocomplete="off">
+                    {{ search_type_select(current_value=bucket_filter) }}
+                </div>
+            </form>
+        </div>
+
+        <div id="search-results" class="search-results">
+{% include "partials/search_results.html" %}
+        </div>
+    </div>
+{% endblock %}

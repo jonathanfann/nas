@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "macros/icons.html" import icon %}
+
+{% block content %}
+    <div class="home">
+        <section class="upload-section upload-section--home">
+            <h2 class="upload-section__title">
+Quick Upload
+            </h2>
+            <form class="upload-form"
+                  action="{{ url_for("nas.upload") }}"
+                  method="post"
+                  enctype="multipart/form-data"
+                  id="upload-form">
+                <input type="hidden" name="redirect_to" value="home">
+                <label class="drop-zone" id="drop-zone">
+                    <input type="file"
+                           name="file"
+                           id="file-input"
+                           multiple
+                           class="drop-zone__input">
+                    <span class="drop-zone__prompt">Drop files here or click to browse</span>
+                </label>
+            </form>
+        </section>
+
+        <div class="buckets">
+            <a href="{{ url_for('nas.bucket', bucket='images') }}"
+               class="bucket-card">
+                <span class="bucket-card__icon bucket-card__icon--images">{{ icon("image", size=48, class="icon") }}</span>
+                <span class="bucket-card__label">Images</span>
+                <span class="bucket-card__count">{{ bucket_counts.get('images', 0) }}</span>
+            </a>
+            <a href="{{ url_for('nas.bucket', bucket='videos') }}"
+               class="bucket-card">
+                <span class="bucket-card__icon bucket-card__icon--videos">{{ icon("video", size=48, class="icon") }}</span>
+                <span class="bucket-card__label">Videos</span>
+                <span class="bucket-card__count">{{ bucket_counts.get('videos', 0) }}</span>
+            </a>
+            <a href="{{ url_for('nas.bucket', bucket='music') }}"
+               class="bucket-card">
+                <span class="bucket-card__icon bucket-card__icon--music">{{ icon("music", size=48, class="icon") }}</span>
+                <span class="bucket-card__label">Music</span>
+                <span class="bucket-card__count">{{ bucket_counts.get('music', 0) }}</span>
+            </a>
+            <a href="{{ url_for('nas.bucket', bucket='files') }}"
+               class="bucket-card">
+                <span class="bucket-card__icon bucket-card__icon--files">{{ icon("file", size=48, class="icon") }}</span>
+                <span class="bucket-card__label">Files</span>
+                <span class="bucket-card__count">{{ bucket_counts.get('files', 0) }}</span>
+            </a>
+        </div>
+    </div>
+{% endblock content %}
